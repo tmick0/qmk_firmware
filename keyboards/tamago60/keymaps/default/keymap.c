@@ -9,6 +9,8 @@ enum layer_names {
     _FN
 };
 
+static uint8_t layer = _BASE;
+static uint8_t scroll_ticks = 0;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT(
@@ -23,6 +25,36 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS, KC_PGUP, KC_UP,   KC_PGDN, KC_TRNS, KC_VOLU,                   KC_TRNS, KC_TRNS, KC_INS,  KC_TRNS, KC_PSCR, KC_F12,  \
         KC_TRNS, KC_LEFT, KC_DOWN, KC_RGHT, KC_TRNS, KC_VOLD,                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, \
         KC_TRNS, KC_HOME, KC_TRNS, KC_END,  KC_TRNS, KC_MUTE,                   KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, \
-        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,     KC_TRNS,      KC_TRNS, KC_TRNS,     KC_TRNS,      KC_TRNS, KC_TRNS, KC_TRNS, KC_DEL
+        KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,     KC_TRNS,      KC_BTN3, KC_BTN4,     KC_TRNS,      KC_TRNS, KC_TRNS, KC_TRNS, KC_DEL
     )
 };
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    layer = get_highest_layer(state);
+    return state;
+}
+
+static inline int8_t sign(const int8_t x) {
+    return ((x == 0) ? 0 : (x < 0) ? -1 : 1);
+}
+
+report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
+    if (layer >= _FN) {
+        // Translate move to scroll when Fn is active
+        mouse_report.h = sign(mouse_report.x);
+        mouse_report.v = sign(mouse_report.y);
+        mouse_report.x = 0;
+        mouse_report.y = 0;
+
+        // Only send once every SCROLL_WAIT_PERIOD ticks to slow scroll down
+        if (mouse_report.h || mouse_report.v) {
+            if (scroll_ticks != 0) {
+                mouse_report.h = 0;
+                mouse_report.v = 0;
+            }
+            scroll_ticks = (scroll_ticks + 1) % SCROLL_WAIT_PERIOD;
+        }
+    }
+
+    return mouse_report;
+}
