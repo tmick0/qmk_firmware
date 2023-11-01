@@ -6,8 +6,7 @@
 enum layer_names {
     _BASE,
     _NUM,
-    _NAV,
-    _FN
+    _NAV
 };
 
 #define M1(x) LSFT_T(x)
@@ -18,41 +17,44 @@ enum layer_names {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_BASE] = LAYOUT(
-  XXXXXXX,  XXXXXXX,       XXXXXXX,     XXXXXXX,  XXXXXXX,   XXXXXXX,                 XXXXXXX,  XXXXXXX,  XXXXXXX,  XXXXXXX,     XXXXXXX, XXXXXXX,
-  XXXXXXX,     KC_Q,          KC_W,        KC_E,     KC_R,      KC_T,                    KC_Y,     KC_U,     KC_I,     KC_O,        KC_P, XXXXXXX,
-  XXXXXXX, M1(KC_A),      M2(KC_S),    M3(KC_D), M4(KC_F),  M5(KC_G),                M5(KC_H), M4(KC_J), M3(KC_K), M2(KC_L), M1(KC_SCLN), XXXXXXX,
-  XXXXXXX, M1(KC_Z),          KC_X,        KC_C,     KC_V,      KC_B,                    KC_N,     KC_M,  KC_COMM,   KC_DOT,     KC_SLSH, XXXXXXX,
-           M2(KC_LBRC), M3(KC_RBRC), M4(KC_BSLS), MO(_NUM),    KC_SPC,                  KC_ENT, MO(_NAV),  KC_GRV,  KC_QUOT,     KC_BSPC
+  XXXXXXX,  XXXXXXX,       XXXXXXX,     XXXXXXX,           XXXXXXX,   XXXXXXX,           XXXXXXX,          XXXXXXX,  XXXXXXX,  XXXXXXX,     XXXXXXX, XXXXXXX,
+  XXXXXXX,     KC_Q,          KC_W,        KC_E,              KC_R,      KC_T,              KC_Y,             KC_U,     KC_I,     KC_O,        KC_P, XXXXXXX,
+  XXXXXXX, M1(KC_A),      M2(KC_S),    M3(KC_D),          M4(KC_F),  M5(KC_G),          M5(KC_H),         M4(KC_J), M3(KC_K), M2(KC_L), M1(KC_SCLN), XXXXXXX,
+  XXXXXXX, M1(KC_Z),          KC_X,        KC_C,              KC_V,      KC_B,              KC_N,             KC_M,  KC_COMM,   KC_DOT,     KC_SLSH, XXXXXXX,
+           M2(KC_LBRC), M3(KC_RBRC), M4(KC_BSLS), LT(_NUM, KC_SPC),    XXXXXXX,          XXXXXXX, LT(_NAV, KC_ENT),  KC_MINS,  KC_QUOT,     KC_BSPC
 ),
 
 [_NUM] = LAYOUT(
   _______,     _______,     _______,      _______,     _______,     _______,                 _______,      _______,     _______,     _______,     _______, _______,
   _______,        KC_1,        KC_2,         KC_3,        KC_4,        KC_5,                    KC_6,         KC_7,        KC_8,        KC_9,        KC_0, _______,
   _______, M1(KC_EXLM),    M2(KC_AT), M3(KC_HASH),  M4(KC_DLR), M5(KC_PERC),             M5(KC_CIRC),  M4(KC_AMPR), M3(KC_ASTR), M2(KC_LPRN), M1(KC_RPRN), _______,
-  _______,     XXXXXXX,      XXXXXXX,     XXXXXXX,     XXXXXXX,     XXXXXXX,                 XXXXXXX,      XXXXXXX,     XXXXXXX,     XXXXXXX,     XXXXXXX, _______,
-               XXXXXXX,      XXXXXXX,     XXXXXXX,     XXXXXXX,      KC_TAB,                 XXXXXXX,      MO(_FN),     KC_MINS,      KC_EQL,      KC_DEL
+  _______,       KC_F1,        KC_F2,       KC_F3,       KC_F4,       KC_F5,                   KC_F6,        KC_F7,       KC_F8,       KC_F9,      KC_F10, _______,
+                KC_F11,       KC_F12,     XXXXXXX,     XXXXXXX,     XXXXXXX,                 XXXXXXX,      XXXXXXX,      KC_GRV,      KC_EQL,      KC_DEL
 ),
 
 [_NAV] = LAYOUT(
   _______,     _______,     _______,     _______,     _______,     _______,                _______,     _______,      _______,     _______,     _______, _______,
-  _______,     KC_PGUP,       KC_UP,     KC_PGDN,     XXXXXXX,     KC_VOLU,                XXXXXXX,     XXXXXXX,      KC_INS,      XXXXXXX,     KC_PSCR, _______,
-  _______,     KC_LEFT,     KC_DOWN,     KC_RGHT,     XXXXXXX,     KC_VOLD,            M5(XXXXXXX),  M4(XXXXXXX), M3(XXXXXXX), M2(XXXXXXX), M1(XXXXXXX), _______,
-  _______,     KC_HOME,      KC_ESC,      KC_END,     XXXXXXX,     KC_MUTE,                XXXXXXX,     XXXXXXX,      XXXXXXX,     XXXXXXX,     XXXXXXX, _______,
-               XXXXXXX,     XXXXXXX,     XXXXXXX,     MO(_FN),      KC_TAB,                XXXXXXX,     XXXXXXX,      XXXXXXX,     XXXXXXX,     XXXXXXX
+  _______,     KC_ESC,      KC_PGUP,       KC_UP,     KC_PGDN,     KC_VOLU,                XXXXXXX,     XXXXXXX,      KC_INS,      XXXXXXX,     KC_PSCR, _______,
+  _______,     XXXXXXX,     KC_LEFT,     KC_DOWN,     KC_RGHT,     KC_VOLD,            M5(XXXXXXX),  M4(XXXXXXX), M3(XXXXXXX), M2(XXXXXXX), M1(XXXXXXX), _______,
+  _______,     XXXXXXX,     KC_HOME,      KC_ESC,      KC_END,     KC_MUTE,                XXXXXXX,     RGB_SPI,      RGB_HUI,     RGB_SAI,     RGB_VAI, _______,
+               XXXXXXX,     XXXXXXX,     XXXXXXX,      KC_TAB,     XXXXXXX,                XXXXXXX,     XXXXXXX,      RGB_TOG,     RGB_MOD,      KC_DEL
 ),
 
-[_FN] = LAYOUT(
-  _______,     _______,     _______,     _______,     _______,     _______,                 _______,     _______,     _______,     _______,    _______, _______,
-  _______,       KC_F1,       KC_F2,       KC_F3,       KC_F4,       KC_F5,                   KC_F6,       KC_F7,       KC_F8,       KC_F9,     KC_F10, _______,
-  _______, M1(_______), M2(_______), M3(_______), M4(_______), M5(_______),             M5(_______), M4(_______), M3(_______),  M2(KC_F11), M1(KC_F11), _______,
-  _______,     _______,     _______,     _______,     _______,     _______,                 _______,     _______,     RGB_HUI,     RGB_SAI,    RGB_VAI, _______,
-               _______,     _______,     _______,     _______,     _______,                 _______,     _______,     RGB_SPI,     RGB_MOD,    RGB_TOG
-),
 };
 
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+  switch (keycode) {
+    case LT(_NUM, KC_SPC):
+    case LT(_NAV, KC_ENT):
+      return LT_TAPPING_TERM;
+    default:
+      return TAPPING_TERM;
+  }
+}
+
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-  const int r[] = {0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 1, 2, 3, 6, 7, 8};
-  const int c[] = {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0};
+  const int r[] = {0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 1, 2, 3, 6, 7, 8, 4, 9};
+  const int c[] = {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 5, 5};
   for (int i = 0; i < sizeof(r) / sizeof(*r); ++i) {
     rgb_matrix_set_color(g_led_config.matrix_co[r[i]][c[i]], 0, 0, 0);
   }
