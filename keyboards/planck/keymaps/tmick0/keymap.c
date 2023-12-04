@@ -18,8 +18,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [_BASE] = LAYOUT_planck_2x2u(
        KC_Q,        KC_W,        KC_E,        KC_R,    KC_T, XXXXXXX,    XXXXXXX, KC_Y,        KC_U,        KC_I,        KC_O,        KC_P,
    M1(KC_A),    M2(KC_S),    M3(KC_D),    M4(KC_F),    KC_G, XXXXXXX,    XXXXXXX, KC_H,    M4(KC_J),    M3(KC_K),    M2(KC_L), M1(KC_SCLN),
-   M1(KC_Z),        KC_X,        KC_C,        KC_V,    KC_B, XXXXXXX,    XXXXXXX, KC_N,        KC_M,     KC_COMM,      KC_DOT,     KC_SLSH,
-    XXXXXXX, M2(KC_LBRC), M3(KC_RBRC), M4(KC_BSLS), LT(_NUM, KC_SPC), LT(_NAV, KC_ENT),     KC_MINS,     KC_QUOT,     KC_BSPC,     XXXXXXX
+   M2(KC_Z),        KC_X,        KC_C,        KC_V,    KC_B, XXXXXXX,    XXXXXXX, KC_N,        KC_M,     KC_COMM,      KC_DOT,     KC_SLSH,
+    XXXXXXX, M3(KC_LBRC), M4(KC_RBRC),     KC_BSLS, LT(_NUM, KC_SPC), LT(_NAV, KC_ENT),     KC_MINS,     KC_QUOT,     KC_BSPC,     XXXXXXX
 ),
 
 [_NUM] = LAYOUT_planck_2x2u(
