@@ -1,65 +1,70 @@
 // Copyright 2023 Travis Mick (@tmick0)
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <string.h>
 #include "matrix.h"
 #include "pca9555.h"
-#include "debounce.h"
+#include "i2c_master.h"
 
 // I2C addresses for each half's pca9555
-#define LHS (0b01000000)
-#define RHS (0b01000010)
-
-// Bitshift and mask for reading the columns
-#define HALF (MATRIX_COLS >> 1)
-#define MASK ((1 << HALF) - 1)
+#define LHS (0b0100000)
+#define RHS (0b0100001)
 
 // State
-static matrix_row_t matrix[MATRIX_ROWS] = {0};
-static matrix_row_t debounced[MATRIX_ROWS] = {0};
-static bool status = true;
+static bool rhs_present = false;
+static uint8_t rhs_err_count = 0;
 
-static void init_gpio(const uint8_t addr) {
+// Macros for I2C communication
+#define SLAVE_TO_ADDR(n) (n << 1)
+#define TIMEOUT 100
+
+// Commands for pca9555 input polarity inversion
+enum {
+    CMD_INVERSION_0 = 4,
+    CMD_INVERSION_1
+};
+
+static bool pca9555_set_polarity(uint8_t slave_addr, pca9555_port_t port, uint8_t conf) {
+    uint8_t addr = SLAVE_TO_ADDR(slave_addr);
+    uint8_t cmd  = port ? CMD_INVERSION_1 : CMD_INVERSION_0;
+    i2c_status_t ret = i2c_writeReg(addr, cmd, &conf, sizeof(conf), TIMEOUT);
+    return ret == I2C_STATUS_SUCCESS;
+}
+
+static bool init_gpio(const uint8_t addr) {
     pca9555_init(addr);
-
-    // Each pca9555 has cols on port0 and rows on port1
-    // Configure them as input and output respectively
-    pca9555_set_config(addr, PCA9555_PORT0, ALL_INPUT);
-    pca9555_set_config(addr, PCA9555_PORT1, ALL_OUTPUT);
-    // pca9555_set_output(addr, PCA9555_PORT1, 0);
+    return pca9555_set_config(addr, PCA9555_PORT1, ALL_INPUT)
+        && pca9555_set_config(addr, PCA9555_PORT0, ALL_OUTPUT)
+        && pca9555_set_output(addr, PCA9555_PORT0, ALL_HIGH)
+        && pca9555_set_polarity(addr, PCA9555_PORT1, ALL_HIGH);
 }
 
-void matrix_init(void) {
+void matrix_init_custom(void) {
     init_gpio(LHS);
-    init_gpio(RHS);
-    debounce_init(MATRIX_ROWS);
+    rhs_present = init_gpio(RHS);
 }
 
-uint8_t matrix_scan(void) {
+uint8_t matrix_scan_custom(matrix_row_t matrix[]) {
     bool change = false;
-
-    // If the split connection was lost, reinitialize the right side
-    if (!status) {
-        init_gpio(RHS);
+    if (!rhs_present && ++rhs_err_count == 0) {
+        if (init_gpio(RHS)) {
+            rhs_present = true;
+            rhs_err_count = 0;
+        }
     }
-
-    // Scan both lhs and rhs in parallel
-    for (uint8_t row = 0; row < MATRIX_ROWS / 2; ++row) {
-        // Set row high
-        pca9555_set_output(LHS, PCA9555_PORT1, 1 << row);
-        pca9555_set_output(RHS, PCA9555_PORT1, 1 << row);
-
-        // todo: delay here?
-
-        // Read columns
-        uint8_t cols_lhs, cols_rhs;
-        pca9555_readPins(LHS, PCA9555_PORT0, &cols_lhs);
-        status = pca9555_readPins(RHS, PCA9555_PORT0, &cols_rhs);
-
-        // Update matrix
+    for (uint8_t row = 0; row < MATRIX_ROWS; ++row) {
         const matrix_row_t prev = matrix[row];
-        matrix[row] = ((cols_rhs & MASK) << HALF) | (cols_lhs & MASK);
+        memset(&matrix[row], 0x00, sizeof(matrix_row_t));
+        if (rhs_present || row < MATRIX_ROWS / 2) {
+            const uint8_t addr = row >= MATRIX_ROWS / 2 ? RHS : LHS;
+            const uint8_t bit = row >= MATRIX_ROWS / 2 ? row - MATRIX_ROWS / 2 : row;
+            const bool success = pca9555_set_output(addr, PCA9555_PORT0, ALL_HIGH & ~(1 << bit))
+                              && pca9555_readPins(addr, PCA9555_PORT1, &matrix[row]);
+            if (!success && row >= MATRIX_ROWS / 2) {
+                rhs_present = false;
+            }
+        }
         change |= (prev != matrix[row]);
     }
-
-    return debounce(matrix, debounced, MATRIX_ROWS, change);
+    return change;
 }
