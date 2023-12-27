@@ -6,7 +6,7 @@ A 38-key low-profile split keyboard.
 
 * Keyboard Maintainer: [Travis Mick](https://github.com/tmick0)
 * Hardware Supported: Chicklet v1 PCB
-* Hardware Availability: [Open source](https://github.com/eggsworks/chicklet) or [kit](https://eggs.works/chicklet)
+* Hardware Availability: [Open source](https://github.com/eggsworks/chicklet) or [kit](https://eggs.works/products/chicklet)
 
 Make example for this keyboard (after setting up your build environment):
 
