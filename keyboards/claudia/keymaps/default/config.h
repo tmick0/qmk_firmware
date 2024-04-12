@@ -4,3 +4,4 @@
 #pragma once
 #define TAPPING_TERM 200
 #define PERMISSIVE_HOLDS
+#define TAP_CODE_DELAY 20
