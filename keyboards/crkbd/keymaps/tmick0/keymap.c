@@ -21,7 +21,6 @@ enum custom_keycodes {
 #define M3(x) LGUI_T(x)
 #define M4(x) LALT_T(x)
 
-bool default_scrolling = false;
 bool set_scrolling = false;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -80,16 +79,28 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (keycode == DRAG_SCROLL && record->event.pressed) {
-        set_scrolling = !set_scrolling;
+    if (keycode == DRAG_SCROLL) {
+      set_scrolling = record->event.pressed;
+      if (set_scrolling) {
+        pimoroni_trackball_set_rgbw(0xb0, 0x50, 0xb0, 0x00);
+        pimoroni_trackball_set_cpi(SCROLL_CPI);
+      } else {
+        pimoroni_trackball_set_rgbw(0x80, 0x00, 0xa0, 0x00);
+        pimoroni_trackball_set_cpi(MOUSE_CPI);
+      }
+      return false;
+    }
+
+    if (keycode == LT(_SCROLL, KC_T) || keycode ==  LT(_SCROLL, KC_Y)) {
+      if (!record->tap.count) {
+        set_scrolling = record->event.pressed;
         if (set_scrolling) {
-          pimoroni_trackball_set_rgbw(0xb0, 0x50, 0xb0, 0x00);
           pimoroni_trackball_set_cpi(SCROLL_CPI);
         } else {
-          pimoroni_trackball_set_rgbw(0x80, 0x00, 0xa0, 0x00);
           pimoroni_trackball_set_cpi(MOUSE_CPI);
         }
-        return true;
+        return false;
+      }
     }
   
     const uint16_t sh_modtaps[] = {M1(KC_EXLM), M2(KC_AT), M3(KC_HASH), M4(KC_DLR), M4(KC_AMPR), M3(KC_ASTR), M2(KC_LPRN), M1(KC_RPRN)};
@@ -108,7 +119,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 layer_state_t layer_state_set_user(layer_state_t state) {
     switch (get_highest_layer(state)) {
     case _MOUSE:
-        set_scrolling = default_scrolling;
         if (set_scrolling) {
           pimoroni_trackball_set_rgbw(0xb0, 0x50, 0xb0, 0x00);
           pimoroni_trackball_set_cpi(SCROLL_CPI);
@@ -118,23 +128,16 @@ layer_state_t layer_state_set_user(layer_state_t state) {
         }
         break;
     case _NUM:
-        default_scrolling = false;
         pimoroni_trackball_set_rgbw(0xd0, 0xf0, 0x40, 0x00);
         break;
     case _NAV:
-        default_scrolling = false;
         pimoroni_trackball_set_rgbw(0x00, 0x80, 0xd0, 0x00);
         break;
     case _FN:
-        default_scrolling = false;
         pimoroni_trackball_set_rgbw(0xd0, 0x20, 0x50, 0x00);
         break;
-    case _SCROLL:
-      default_scrolling = true;
-      break;
     case _BASE:
     default:
-        default_scrolling = false;
         pimoroni_trackball_set_rgbw(0x00, 0x00, 0x00, 0x90);
         break;
     }
@@ -149,6 +152,15 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
         mouse_report.y = 0;
     }
     return mouse_report;
+}
+
+bool is_mouse_record_kb(uint16_t keycode, keyrecord_t* record) {
+  switch (keycode) {
+    case DRAG_SCROLL:
+      return true;
+    default:
+      return false;
+  }
 }
 
 void pointing_device_init_user(void) {
