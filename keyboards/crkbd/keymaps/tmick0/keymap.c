@@ -14,6 +14,7 @@ enum layer_names {
 
 enum custom_keycodes {
     DRAG_SCROLL = SAFE_RANGE,
+    PRECISION,
 };
 
 #define M1(x) LSFT_T(x)
@@ -22,14 +23,15 @@ enum custom_keycodes {
 #define M4(x) LALT_T(x)
 
 bool set_scrolling = false;
+bool set_precision = false;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 [_BASE] = LAYOUT_split_3x5_3(
-       KC_Q,       KC_W,         KC_E,        KC_R, LT(_SCROLL, KC_T),                     LT(_SCROLL, KC_Y),        KC_U,        KC_I,        KC_O,        KC_P,
-   M1(KC_A),   M2(KC_S),     M3(KC_D),    M4(KC_F), KC_G,                                               KC_H,    M4(KC_J),    M3(KC_K),    M2(KC_L), M1(KC_SCLN),
-   M2(KC_Z),   M3(KC_X),     M4(KC_C),        KC_V, KC_B,                                               KC_N,        KC_M,     KC_COMM,      KC_DOT,     KC_SLSH,
-                                           XXXXXXX, KC_LBRC, LT(_NUM, KC_SPC),     LT(_NAV, KC_ENT), KC_BSPC,     XXXXXXX
+       KC_Q,       KC_W,         KC_E,              KC_R, LT(_SCROLL, KC_T),                     LT(_SCROLL, KC_Y),              KC_U,        KC_I,        KC_O,        KC_P,
+   M1(KC_A),   M2(KC_S),     M3(KC_D),          M4(KC_F), KC_G,                                               KC_H,          M4(KC_J),    M3(KC_K),    M2(KC_L), M1(KC_SCLN),
+   M2(KC_Z),   M3(KC_X),     M4(KC_C), LT(_SCROLL, KC_V), KC_B,                                               KC_N, LT(_SCROLL, KC_M),     KC_COMM,      KC_DOT,     KC_SLSH,
+                                                 XXXXXXX, KC_LBRC, LT(_NUM, KC_SPC),     LT(_NAV, KC_ENT), KC_BSPC,           XXXXXXX
 ),
 
 [_SCROLL] = LAYOUT_split_3x5_3(
@@ -61,9 +63,9 @@ M1(KC_EXLM),   M2(KC_AT), M3(KC_HASH),  M4(KC_DLR), KC_PERC,                    
 ),
 
 [_MOUSE] = LAYOUT_split_3x5_3(
-    XXXXXXX,     XXXXXXX,     XXXXXXX,     XXXXXXX, DRAG_SCROLL,                                 DRAG_SCROLL,     XXXXXXX,     XXXXXXX,     XXXXXXX,     XXXXXXX,
-    XXXXXXX,     XXXXXXX,     XXXXXXX,     KC_BTN3, KC_BTN4,                                         KC_BTN4,     KC_BTN3,     XXXXXXX,     XXXXXXX,     XXXXXXX,
-    XXXXXXX,     XXXXXXX,     XXXXXXX,     XXXXXXX, KC_BTN5,                                         KC_BTN5,     XXXXXXX,     XXXXXXX,     XXXXXXX,     XXXXXXX,
+    XXXXXXX,     XXXXXXX,     XXXXXXX,     KC_BTN3, DRAG_SCROLL,                                 DRAG_SCROLL,     KC_BTN3,     XXXXXXX,     XXXXXXX,     XXXXXXX,
+    KC_LSFT,     KC_LCTL,     KC_LCMD,     KC_LALT, KC_BTN4,                                         KC_BTN4,     KC_LALT,     KC_LCMD,     KC_LCTL,     KC_LSFT,
+    XXXXXXX,     XXXXXXX,     XXXXXXX,   PRECISION, KC_BTN5,                                         KC_BTN5,   PRECISION,     XXXXXXX,     XXXXXXX,     XXXXXXX,
                                            XXXXXXX, KC_BTN2, KC_BTN1,                       KC_BTN1, KC_BTN2,     XXXXXXX
 ),
 };
@@ -78,27 +80,42 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
   }
 }
 
+void update_scrolling(bool scroll_enable, bool precision_enable, bool mouse_active) {
+  set_scrolling = scroll_enable;
+  set_precision = precision_enable;
+  pimoroni_trackball_set_cpi((scroll_enable || precision_enable) ? SCROLL_CPI : MOUSE_CPI);
+  if (mouse_active) {
+    if (set_scrolling) {
+      pimoroni_trackball_set_rgbw(0xd0, 0x80, 0xd0, 0x00);
+    } else if (precision_enable) {
+      pimoroni_trackball_set_rgbw(0xb0, 0x50, 0xb0, 0x00);
+    } else {
+      pimoroni_trackball_set_rgbw(0x80, 0x00, 0xa0, 0x00);
+    }
+  }
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (keycode == DRAG_SCROLL) {
-      set_scrolling = record->event.pressed;
-      if (set_scrolling) {
-        pimoroni_trackball_set_rgbw(0xb0, 0x50, 0xb0, 0x00);
-        pimoroni_trackball_set_cpi(SCROLL_CPI);
-      } else {
-        pimoroni_trackball_set_rgbw(0x80, 0x00, 0xa0, 0x00);
-        pimoroni_trackball_set_cpi(MOUSE_CPI);
-      }
+      update_scrolling(record->event.pressed, set_precision, layer_state_is(_MOUSE));
+      return false;
+    }
+
+    if (keycode == PRECISION) {
+      update_scrolling(set_scrolling, record->event.pressed, layer_state_is(_MOUSE));
       return false;
     }
 
     if (keycode == LT(_SCROLL, KC_T) || keycode ==  LT(_SCROLL, KC_Y)) {
       if (!record->tap.count) {
-        set_scrolling = record->event.pressed;
-        if (set_scrolling) {
-          pimoroni_trackball_set_cpi(SCROLL_CPI);
-        } else {
-          pimoroni_trackball_set_cpi(MOUSE_CPI);
-        }
+        update_scrolling(record->event.pressed, set_precision, layer_state_is(_MOUSE));
+        return false;
+      }
+    }
+
+    if (keycode == LT(_SCROLL, KC_V) || keycode ==  LT(_SCROLL, KC_M)) {
+      if (!record->tap.count) {
+        update_scrolling(set_scrolling, record->event.pressed, layer_state_is(_MOUSE));
         return false;
       }
     }
@@ -119,13 +136,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 layer_state_t layer_state_set_user(layer_state_t state) {
     switch (get_highest_layer(state)) {
     case _MOUSE:
-        if (set_scrolling) {
-          pimoroni_trackball_set_rgbw(0xb0, 0x50, 0xb0, 0x00);
-          pimoroni_trackball_set_cpi(SCROLL_CPI);
-        } else {
-          pimoroni_trackball_set_rgbw(0x80, 0x00, 0xa0, 0x00);
-          pimoroni_trackball_set_cpi(MOUSE_CPI);
-        }
+        update_scrolling(set_scrolling, set_precision, true);
         break;
     case _NUM:
         pimoroni_trackball_set_rgbw(0xd0, 0xf0, 0x40, 0x00);
@@ -157,6 +168,11 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 bool is_mouse_record_kb(uint16_t keycode, keyrecord_t* record) {
   switch (keycode) {
     case DRAG_SCROLL:
+    case PRECISION:
+    case KC_LSFT:
+    case KC_LCTL:
+    case KC_LCMD:
+    case KC_LALT:
       return true;
     default:
       return false;
